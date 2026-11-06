@@ -1,0 +1,53 @@
+const map = L.map('map').setView([52.1,5.3],8);
+
+L.tileLayer(
+'https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/standaard/{z}/{x}/{y}.png'),
+{
+ attribution:'© OpenStreetMap'
+}
+).addTo(map);
+
+const clusters = L.markerClusterGroup();
+
+let allMarkers = [];
+
+fetch('data/wegwijzers.geojson')
+.then(response => response.json())
+.then(data => {
+
+   data.features.forEach(feature => {
+
+      const p = feature.properties;
+
+      const marker = L.marker([
+          feature.geometry.coordinates[1],
+          feature.geometry.coordinates[0]
+      ]);
+
+      marker.featureData = p;
+
+      marker.bindPopup(`
+        <b>${p.objectnummer}</b><br>
+        Type: ${p.type}<br>
+        Wegbeheerder: ${p.beheerder}<br>
+        Plaats: ${p.plaats}<br>
+        <br>
+        <a target="_blank"
+           href="https://maps.google.com/?q=${feature.geometry.coordinates[1]},${feature.geometry.coordinates[0]}">
+           Street View
+        </a>
+      `);
+
+      allMarkers.push(marker);
+
+      clusters.addLayer(marker);
+
+   });
+
+   map.addLayer(clusters);
+
+   document.getElementById("aantal")
+      .innerHTML =
+      `${allMarkers.length} objecten geladen`;
+
+});
